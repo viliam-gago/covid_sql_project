@@ -4,8 +4,8 @@ The purpose of this project is practice data preparation. We received informatio
 
 
 ## Notes to the script:
-- Before creating the final table, I created four sub-tables, all listed in ##### queries_sub_tables. There is commented the query for creating corresponding table, along with deleting it.
-- ##### Sub tables from above are used in final "joininq_query" -> ##### final_table
+- ##### Before creating the final table, I created four sub-tables, all listed in "queries_sub_tables". There is commented the query for creating corresponding table, along with deleting it.
+- ##### Sub tables from above are used in final joininq_query -> "final_table"
 
 ## Work notes:
 
