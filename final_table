@@ -29,5 +29,5 @@ LEFT JOIN t_viliam_gago_proj_country_tab country
 ON base.country = country.country
 LEFT JOIN t_viliam_gago_proj_weather_tab weather
 ON base.country = weather.country AND base.date = weather.date
-WHERE  base.date > '2020-04-05' AND base.date < '2020-04-20'
+-- WHERE  base.date > '2020-04-05' AND base.date < '2020-04-20'
 ORDER BY base.country, base.date
