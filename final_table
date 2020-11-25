@@ -1,0 +1,33 @@
+SELECT
+	base.country,
+	base.date,
+	base.confirmed,
+	base.tests_performed,
+	base.population,
+	time.work_day,
+	time.season,
+	country.population_density,
+	country.GDP_per_capita,
+	country.gini,
+	country.mortaliy_under5,
+	country.median_age_2018,
+	country.perc_christ,
+	country.perc_islam,
+	country.perc_unaffiliated,
+	country.perc_budh,
+	country.perc_folk,
+	country.perc_other,
+	country.perc_judaism,
+	country.diff_in_life_exp,
+	weather.avg_daily,
+	weather.non_zero_rain_hrs,
+	weather.max_w_gust
+FROM t_viliam_gago_proj_base base
+LEFT JOIN t_viliam_gago_proj_time_tab time
+ON base.country = time.country AND base.date = time.date
+LEFT JOIN t_viliam_gago_proj_country_tab country
+ON base.country = country.country
+LEFT JOIN t_viliam_gago_proj_weather_tab weather
+ON base.country = weather.country AND base.date = weather.date
+WHERE  base.date > '2020-04-05' AND base.date < '2020-04-20'
+ORDER BY base.country, base.date
