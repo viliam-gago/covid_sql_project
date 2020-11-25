@@ -1,0 +1,125 @@
+-- FIRST TABLE -> BASE - contains data of daily confirmed cases of countries for specific date, along with test information and population
+
+-- CREATE TABLE t_viliam_gago_proj_base AS
+-- DROP TABLE t_viliam_gago_proj_base;
+SELECT
+	cbd.country,
+	cbd.`date` ,
+	cbd.confirmed,
+	ct.tests_performed,
+	c.population 
+FROM covid19_basic_differences cbd 
+LEFT JOIN covid19_tests ct 
+ON ct.country = cbd.country AND ct.`date` = cbd.`date` 
+LEFT JOIN countries c
+ON c.country = cbd.country
+
+
+-- SECOND TABLE -> TIME variables - season based on date + whether the day is weekend or not
+
+-- CREATE TABLE t_viliam_gago_proj_time_tab AS
+-- DROP TABLE t_viliam_gago_proj_time_tab
+SELECT 
+	country,
+	date,
+	(CASE WHEN DAYOFWEEK(date) IN (1,7) THEN 0
+	ELSE 1 END) work_day,
+	(CASE WHEN MONTH(date) IN (3,4,5) THEN 0
+	      WHEN MONTH(date) IN (6,7,8) THEN 1
+	      WHEN MONTH(date) IN (9,10,11) THEN 2
+	      WHEN MONTH(date) IN (12,1,2) THEN 3 END) season
+FROM covid19_basic_differences cbd 
+
+
+
+-- THIRD TABLE -> COUNTRY variables - contains various information describing each state; uses another tables: life_expectancy, religions, economies, countries
+
+-- CREATE TABLE t_viliam_gago_proj_country_tab AS
+-- DROP TABLE t_viliam_gago_proj_country_tab;
+SELECT 
+	c.country,
+	c.population_density,
+	e.GDP / c.population GDP_per_capita,
+	e.gini,
+	e.mortaliy_under5,
+	c.median_age_2018,
+	ROUND((christ / c.population) * 100,1) AS perc_christ,
+	ROUND((islam / c.population) * 100,1) AS perc_islam,
+	ROUND((unaf / c.population) * 100,1) AS perc_unaffiliated,
+	ROUND((hindu / c.population) * 100,1) AS perc_hindu,
+	ROUND((budhism / c.population) * 100,1) AS perc_budh,
+	ROUND((flk / c.population) * 100,1)  AS perc_folk,
+	ROUND((other / c.population) * 100,1)  AS perc_other,
+	ROUND((jude / c.population) * 100,1) AS perc_judaism,
+	ROUND(diff.exp_life_diff_2015_1965,1 ) AS diff_in_life_exp
+FROM countries c
+JOIN (SELECT
+		country,
+		GDP,
+		gini,
+		mortaliy_under5
+	  FROM economies
+	  WHERE year = 2019) e
+ON c.country = e.country
+JOIN (  SELECT
+			country,
+			SUM(r.christ) AS christ,
+			SUM(r.islam) AS islam,
+			SUM(r.unaf) AS unaf,
+			SUM(r.hindu) AS hindu,
+			SUM(r.budhism) AS budhism,
+			SUM(r.flk) AS flk,
+			SUM(r.other) AS other,
+			SUM(r.jude) AS jude
+		FROM (
+			SELECT
+				region,
+				country,
+				CASE WHEN religion = 'Christianity' THEN population END AS 'christ',
+				CASE WHEN religion = 'Islam' THEN population END AS 'islam',
+				CASE WHEN religion = 'Unaffiliated Religions' THEN population END AS 'unaf',
+				CASE WHEN religion = 'Hinduism' THEN population END AS 'hindu',
+				CASE WHEN religion = 'Buddhism' THEN population END AS 'budhism',
+				CASE WHEN religion = 'Folk Religions' THEN population END AS 'flk',
+				CASE WHEN religion = 'Other Religions' THEN population END AS 'other',
+				CASE WHEN religion = 'Judaism' THEN population END AS 'jude'
+			FROM religions
+			WHERE year = 2010 AND region != 'World' AND country != 'All Countries') r
+		GROUP BY region ,country) relig
+ON relig.country = c.country
+JOIN (
+		SELECT
+		country,
+		exp_life_diff_2015_1965
+		FROM ( SELECT 
+					*,
+					life_expectancy  - LAG(life_expectancy) OVER (PARTITION BY country ORDER BY year) AS exp_life_diff_2015_1965
+				FROM life_expectancy
+				WHERE year = 1965 OR year = 2015) sub 
+		WHERE year = 2015) diff
+ON diff.country = c.country 
+
+
+-- FOURTH TABLE -> WEATHER variables 
+
+-- CREATE TABLE t_viliam_gago_proj_weather_tab
+-- DROP TABLE t_viliam_gago_proj_weather_tab
+SELECT 
+	c.country,
+	w.date,
+	w.avg_daily,
+	w.non_zero_rain_hrs,
+	w.max_w_gust
+FROM(
+SELECT
+		city,
+		date,
+		AVG(temp) AS avg_daily,
+		COUNT(hour) * 3 AS non_zero_rain_hrs,
+		MAX(gust) max_w_gust
+	FROM weather
+	WHERE rain != 0
+	GROUP BY date, city
+) w
+JOIN countries c 
+ON c.capital_city = w.city
