@@ -1,3 +1,4 @@
+CREATE TABLE t_viliam_gago_projekt_SQL_final AS
 SELECT
 	base.country,
 	base.date,
